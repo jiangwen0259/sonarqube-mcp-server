@@ -225,6 +225,7 @@ export interface IssuesParams extends PaginationParams {
   facets?: string[];
   sinceLeakPeriod?: boolean;
   inNewCodePeriod?: boolean;
+  branch?: string;
 }
 
 /**
@@ -362,6 +363,7 @@ export class SonarQubeClient {
       facets,
       sinceLeakPeriod,
       inNewCodePeriod,
+      branch,
     } = params;
 
     const response = await axios.get(`${this.baseUrl}/api/issues/search`, {
@@ -393,6 +395,7 @@ export class SonarQubeClient {
         facets: facets?.join(','),
         sinceLeakPeriod,
         inNewCodePeriod,
+        branch,
       },
     });
 
