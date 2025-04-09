@@ -1,0 +1,20 @@
+### Get SonarQube Issues
+GET http://sonar.chinahuanong.com.cn/api/issues/search
+Authorization: Basic squ_df9f02baf35492ac997de6155f1b08b38e6f72a0:
+Content-Type: application/json
+
+{
+    "componentKeys": "code-fccb",
+    "types": "BUG",
+    "resolved": "false",
+    "branch": "origin/release-3.x",
+    "inNewCodePeriod": "false"
+}
+
+### Get SonarQube Projects
+GET http://sonar.chinahuanong.com.cn/api/projects/search?p=1&ps=100
+Authorization: Basic squ_df9f02baf35492ac997de6155f1b08b38e6f72a0:
+
+### Get Issues for specific project
+GET http://sonar.chinahuanong.com.cn/api/issues/search?projectKeys=code-fccb&types=BUG,VULNERABILITY,CODE_SMELL&statuses=OPEN,CONFIRMED,REOPENED&resolved=false&p=1&ps=100
+Authorization: Basic squ_df9f02baf35492ac997de6155f1b08b38e6f72a0:
