@@ -238,6 +238,7 @@ describe('SonarQubeClient', () => {
           severities: 'CRITICAL',
           p: 1,
           ps: 5,
+          resolved: 'false',
         })
         .basicAuth({ user: token, pass: '' })
         .reply(200, mockResponse);

@@ -208,6 +208,8 @@ export interface IssuesParams extends PaginationParams {
   resolutions?: ('FALSE-POSITIVE' | 'WONTFIX' | 'FIXED' | 'REMOVED')[];
   resolved?: boolean;
   types?: ('CODE_SMELL' | 'BUG' | 'VULNERABILITY' | 'SECURITY_HOTSPOT')[];
+  branch?: string;
+  inNewCodePeriod?: boolean;
   rules?: string[];
   tags?: string[];
   createdAfter?: string;
@@ -224,8 +226,6 @@ export interface IssuesParams extends PaginationParams {
   onComponentOnly?: boolean;
   facets?: string[];
   sinceLeakPeriod?: boolean;
-  inNewCodePeriod?: boolean;
-  branch?: string;
 }
 
 /**
@@ -346,6 +346,8 @@ export class SonarQubeClient {
       resolutions,
       resolved,
       types,
+      branch,
+      inNewCodePeriod,
       rules,
       tags,
       createdAfter,
@@ -362,8 +364,6 @@ export class SonarQubeClient {
       onComponentOnly,
       facets,
       sinceLeakPeriod,
-      inNewCodePeriod,
-      branch,
     } = params;
 
     const response = await axios.get(`${this.baseUrl}/api/issues/search`, {
@@ -376,8 +376,10 @@ export class SonarQubeClient {
         ps: pageSize,
         statuses: statuses?.join(','),
         resolutions: resolutions?.join(','),
-        resolved,
+        resolved: resolved ? true : false,
         types: types?.join(','),
+        branch,
+        inNewCodePeriod: inNewCodePeriod,
         rules: rules?.join(','),
         tags: tags?.join(','),
         createdAfter,
@@ -394,8 +396,6 @@ export class SonarQubeClient {
         onComponentOnly,
         facets: facets?.join(','),
         sinceLeakPeriod,
-        inNewCodePeriod,
-        branch,
       },
     });
 

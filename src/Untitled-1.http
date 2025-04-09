@@ -1,7 +1,6 @@
 ### Get SonarQube Issues
-GET http://sonar.chinahuanong.com.cn/api/issues/search
+GET http://sonar.chinahuanong.com.cn/api/issues/search?componentKeys=code-fccb&types=BUG&inNewCodePeriod=false&resolved=false&types=BUG&branch=origin%2Frelease-3.x
 Authorization: Basic squ_df9f02baf35492ac997de6155f1b08b38e6f72a0:
-Content-Type: application/json
 
 {
     "componentKeys": "code-fccb",

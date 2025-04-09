@@ -94,6 +94,7 @@ export function mapToSonarQubeParams(params: Record<string, unknown>): IssuesPar
     resolutions: nullToUndefined(params.resolutions) as IssuesParams['resolutions'],
     resolved: nullToUndefined(params.resolved) as boolean | undefined,
     types: nullToUndefined(params.types) as IssuesParams['types'],
+    branch: nullToUndefined(params.branch) as string | undefined,
     rules: nullToUndefined(params.rules) as string[] | undefined,
     tags: nullToUndefined(params.tags) as string[] | undefined,
     createdAfter: nullToUndefined(params.created_after) as string | undefined,
@@ -289,6 +290,7 @@ mcpServer.tool(
       .string()
       .optional()
       .transform((val) => (val ? parseInt(val, 10) || null : null)),
+    branch: z.string().nullable().optional(),
     statuses: statusSchema,
     resolutions: resolutionSchema,
     resolved: z
