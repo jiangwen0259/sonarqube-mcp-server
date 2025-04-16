@@ -280,6 +280,18 @@ export interface SonarQubeMetricsResult {
 export interface MetricsParams extends PaginationParams {}
 
 /**
+ * Interface for pending issues parameters with required fields
+ */
+export interface PendingIssuesParams {
+  projectKey: string;
+  branch: string;
+  inNewCodePeriod: boolean;
+  page: number;
+  pageSize: number;
+  types: ('CODE_SMELL' | 'BUG' | 'VULNERABILITY' | 'SECURITY_HOTSPOT')[] | string;
+}
+
+/**
  * SonarQube client for interacting with the SonarQube API
  */
 export class SonarQubeClient {
@@ -378,8 +390,8 @@ export class SonarQubeClient {
         resolutions: resolutions?.join(','),
         resolved: resolved ? true : false,
         types: types?.join(','),
-        branch,
-        inNewCodePeriod: inNewCodePeriod,
+        branch: branch ?? '',
+        inNewCodePeriod: inNewCodePeriod ? true : false,
         rules: rules?.join(','),
         tags: tags?.join(','),
         createdAfter,
@@ -422,6 +434,82 @@ export class SonarQubeClient {
     return {
       metrics: response.data.metrics,
       paging: response.data.paging,
+    };
+  }
+
+  /**
+   * Gets pending issues for a project in SonarQube
+   * All parameters are required
+   * @param params Required parameters including project key, branch, types, pagination, and new code period flag
+   * @returns Promise with the list of pending issues
+   */
+  async getPendingIssues(params: PendingIssuesParams): Promise<SonarQubeIssuesResult> {
+    const { projectKey, branch, inNewCodePeriod, page, pageSize, types } = params;
+    const authKey = 'app-bzotscb5fcTOfTuIbIP7gEJR';
+
+    // 构建适合API的请求体
+    const requestBody = {
+      inputs: {
+        projectKey: projectKey,
+        types: Array.isArray(types) ? types.join(',') : types,
+        p: String(page),
+        ps: String(pageSize),
+        branch: branch,
+        inNewCodePeriod: String(inNewCodePeriod),
+      },
+      user: 'squ_df9f02baf35492ac997de6155f1b08b38e6f72a0',
+      response_mode: 'blocking',
+    };
+
+    // 发送POST请求到正确的URL
+    const response = await axios.post(
+      'https://faq-flow.chinahuanong.com.cn/v1/workflows/run',
+      requestBody,
+      {
+        headers: {
+          Authorization: `Bearer ${authKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    // 转换响应到预期的SonarQubeIssuesResult格式
+    const responseData = response.data;
+    const issues = responseData.data?.outputs?.result || [];
+    
+    // 将返回的简化issue数据转换为完整的SonarQubeIssue格式
+    const formattedIssues = issues.map((issue: Record<string, unknown>) => {
+      return {
+        key: issue.key as string,
+        rule: (issue.rule as string) || '',
+        component: issue.component as string,
+        project: projectKey,
+        line: issue.line as number,
+        textRange: issue.textRange as SonarQubeTextRange,
+        message: issue.message as string,
+        status: (issue.status as string) || 'OPEN',
+        tags: (issue.tags as string[]) || [],
+        creationDate: (issue.creationDate as string) || new Date().toISOString(),
+        updateDate: (issue.updateDate as string) || new Date().toISOString(),
+        type: (issue.type as string) || 'BUG',
+        severity: (issue.severity as string) || 'MAJOR',
+        // 添加其他必要的默认值
+        messageFormattings: [],
+        impacts: [],
+        flows: []
+      };
+    });
+
+    // 返回格式化的结果
+    return {
+      issues: formattedIssues,
+      components: [],
+      rules: [],
+      paging: {
+        pageIndex: page,
+        pageSize: pageSize,
+        total: issues.length,
+      },
     };
   }
 }

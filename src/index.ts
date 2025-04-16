@@ -8,6 +8,7 @@ import {
   ProjectsParams,
   SonarQubeProject,
   MetricsParams,
+  PendingIssuesParams,
 } from './sonarqube.js';
 import { z } from 'zod';
 
@@ -200,34 +201,61 @@ export async function handleSonarQubeGetMetrics(params: MetricsParams) {
   };
 }
 
-// Define SonarQube severity schema for validation
-const severitySchema = z
-  .enum(['INFO', 'MINOR', 'MAJOR', 'CRITICAL', 'BLOCKER'])
-  .nullable()
-  .optional();
-const statusSchema = z
-  .array(
-    z.enum([
-      'OPEN',
-      'CONFIRMED',
-      'REOPENED',
-      'RESOLVED',
-      'CLOSED',
-      'TO_REVIEW',
-      'IN_REVIEW',
-      'REVIEWED',
-    ])
-  )
-  .nullable()
-  .optional();
-const resolutionSchema = z
-  .array(z.enum(['FALSE-POSITIVE', 'WONTFIX', 'FIXED', 'REMOVED']))
-  .nullable()
-  .optional();
-const typeSchema = z
-  .array(z.enum(['CODE_SMELL', 'BUG', 'VULNERABILITY', 'SECURITY_HOTSPOT']))
-  .nullable()
-  .optional();
+/**
+ * Handler for getting pending SonarQube issues
+ * @param params Required parameters for the pending issues request
+ * @returns Promise with the issues result
+ */
+export async function handleSonarQubePendingIssues(params: PendingIssuesParams) {
+  const result = await client.getPendingIssues(params);
+
+  return {
+    content: [
+      {
+        type: 'text' as const,
+        text: JSON.stringify({
+          issues: result.issues.map((issue) => ({
+            key: issue.key,
+            rule: issue.rule,
+            severity: issue.severity,
+            component: issue.component,
+            project: issue.project,
+            line: issue.line,
+            status: issue.status,
+            issueStatus: issue.issueStatus,
+            message: issue.message,
+            messageFormattings: issue.messageFormattings,
+            effort: issue.effort,
+            debt: issue.debt,
+            author: issue.author,
+            tags: issue.tags,
+            creationDate: issue.creationDate,
+            updateDate: issue.updateDate,
+            type: issue.type,
+            cleanCodeAttribute: issue.cleanCodeAttribute,
+            cleanCodeAttributeCategory: issue.cleanCodeAttributeCategory,
+            prioritizedRule: issue.prioritizedRule,
+            impacts: issue.impacts,
+            textRange: issue.textRange,
+            comments: issue.comments,
+            transitions: issue.transitions,
+            actions: issue.actions,
+            flows: issue.flows,
+            quickFixAvailable: issue.quickFixAvailable,
+            ruleDescriptionContextKey: issue.ruleDescriptionContextKey,
+            codeVariants: issue.codeVariants,
+            hash: issue.hash,
+          })),
+          components: result.components,
+          rules: result.rules,
+          users: result.users,
+          facets: result.facets,
+          paging: result.paging,
+        }),
+      },
+    ],
+  };
+}
 
 // Register SonarQube tools
 mcpServer.tool(
@@ -276,57 +304,55 @@ mcpServer.tool(
   }
 );
 
+/*
 mcpServer.tool(
   'issues',
   'Get issues for a SonarQube project',
   {
-    project_key: z.string(),
-    severity: severitySchema,
-    page: z
-      .string()
-      .optional()
-      .transform((val) => (val ? parseInt(val, 10) || null : null)),
-    page_size: z
-      .string()
-      .optional()
-      .transform((val) => (val ? parseInt(val, 10) || null : null)),
-    branch: z.string().nullable().optional(),
-    statuses: statusSchema,
-    resolutions: resolutionSchema,
-    resolved: z
-      .union([z.boolean(), z.string().transform((val) => val === 'true')])
-      .nullable()
-      .optional(),
-    types: typeSchema,
-    rules: z.array(z.string()).nullable().optional(),
-    tags: z.array(z.string()).nullable().optional(),
-    created_after: z.string().nullable().optional(),
-    created_before: z.string().nullable().optional(),
-    created_at: z.string().nullable().optional(),
-    created_in_last: z.string().nullable().optional(),
-    assignees: z.array(z.string()).nullable().optional(),
-    authors: z.array(z.string()).nullable().optional(),
-    cwe: z.array(z.string()).nullable().optional(),
-    languages: z.array(z.string()).nullable().optional(),
-    owasp_top10: z.array(z.string()).nullable().optional(),
-    sans_top25: z.array(z.string()).nullable().optional(),
-    sonarsource_security: z.array(z.string()).nullable().optional(),
-    on_component_only: z
-      .union([z.boolean(), z.string().transform((val) => val === 'true')])
-      .nullable()
-      .optional(),
-    facets: z.array(z.string()).nullable().optional(),
-    since_leak_period: z
-      .union([z.boolean(), z.string().transform((val) => val === 'true')])
-      .nullable()
-      .optional(),
-    in_new_code_period: z
-      .union([z.boolean(), z.string().transform((val) => val === 'true')])
-      .nullable()
-      .optional(),
+    project_key: z.string().describe('The unique identifier for the SonarQube project'),
+    branch: z.string().describe('Branch name to filter issues'),
+    severity: severitySchema.describe('Filter issues by severity (INFO, MINOR, MAJOR, CRITICAL, BLOCKER)'),
+    page: z.number().min(1).describe('Page number for results pagination'),
+    page_size: z.number().min(1).max(500).describe('Number of items per page'),
+    statuses: statusSchema.describe('Filter issues by status (OPEN, CONFIRMED, REOPENED, RESOLVED, CLOSED, TO_REVIEW, IN_REVIEW, REVIEWED)'),
+    resolutions: resolutionSchema.describe('Filter issues by resolution (FALSE-POSITIVE, WONTFIX, FIXED, REMOVED)'),
+    resolved: z.boolean().describe('Whether to return only resolved issues (true) or unresolved issues (false)'),
+    types: z.array(z.enum(['CODE_SMELL', 'BUG', 'VULNERABILITY', 'SECURITY_HOTSPOT'])).describe('Filter issues by type'),
+    in_new_code_period: z.boolean().describe('Return only issues created in the new code period'),
   },
-  async (params: Record<string, unknown>) => {
+  async (params) => {
     return handleSonarQubeGetIssues(mapToSonarQubeParams(params));
+  }
+);
+*/
+
+// Register the new pending_issues tool with required parameters
+mcpServer.tool(
+  'pending_issues',
+  'Get pending issues for a SonarQube project',
+  {
+    project_key: z.string().describe('The unique identifier for the SonarQube project'),
+    branch: z.string().describe('Branch name to filter issues (required)'),
+    in_new_code_period: z
+      .boolean()
+      .describe('Return only issues created in the new code period (required)'),
+    page: z.number().min(1).describe('Page number for results pagination (required)'),
+    page_size: z.number().min(1).max(500).describe('Number of items per page (required)'),
+    types: z
+      .array(z.enum(['CODE_SMELL', 'BUG', 'VULNERABILITY', 'SECURITY_HOTSPOT']))
+      .describe('Filter issues by type (required)'),
+  },
+  async (params) => {
+    const pendingIssuesParams: PendingIssuesParams = {
+      projectKey: params.project_key as string,
+      branch: params.branch as string,
+      inNewCodePeriod: params.in_new_code_period as boolean,
+      page: params.page as number,
+      pageSize: params.page_size as number,
+      types: params.types as PendingIssuesParams['types'],
+    };
+
+    return handleSonarQubePendingIssues(pendingIssuesParams);
   }
 );
 
