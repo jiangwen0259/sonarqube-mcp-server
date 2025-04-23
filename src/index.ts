@@ -339,7 +339,7 @@ mcpServer.tool(
     page: z.number().min(1).describe('Page number for results pagination (required)'),
     page_size: z.number().min(1).max(500).describe('Number of items per page (required)'),
     types: z
-      .array(z.enum(['CODE_SMELL', 'BUG', 'VULNERABILITY', 'SECURITY_HOTSPOT']))
+      .enum(['CODE_SMELL', 'BUG', 'VULNERABILITY', 'SECURITY_HOTSPOT'])
       .describe('Filter issues by type (required)'),
   },
   async (params) => {
@@ -349,7 +349,7 @@ mcpServer.tool(
       inNewCodePeriod: params.in_new_code_period as boolean,
       page: params.page as number,
       pageSize: params.page_size as number,
-      types: params.types as PendingIssuesParams['types'],
+      types: [params.types as 'CODE_SMELL' | 'BUG' | 'VULNERABILITY' | 'SECURITY_HOTSPOT'],
     };
 
     return handleSonarQubePendingIssues(pendingIssuesParams);

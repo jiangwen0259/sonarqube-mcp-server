@@ -476,7 +476,7 @@ export class SonarQubeClient {
     // 转换响应到预期的SonarQubeIssuesResult格式
     const responseData = response.data;
     const issues = responseData.data?.outputs?.result || [];
-    
+
     // 将返回的简化issue数据转换为完整的SonarQubeIssue格式
     const formattedIssues = issues.map((issue: Record<string, unknown>) => {
       return {
@@ -496,7 +496,7 @@ export class SonarQubeClient {
         // 添加其他必要的默认值
         messageFormattings: [],
         impacts: [],
-        flows: []
+        flows: [],
       };
     });
 
